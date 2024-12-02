@@ -98,58 +98,60 @@ export default function Home() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      flexDirection: "column",
-      textAlign: "center",
+      flexDirection: "column" as React.CSSProperties['flexDirection'], // Explicitly casting
+      textAlign: "center" as "center", // Explicitly typing this
       backgroundColor: darkMode ? "#333" : "#f4f4f4",
       padding: "20px",
       height: "100vh",
     },
-    coinIcon: {
-      color: "#0074D9",
-      marginBottom: "20px",
-      animation: "bounce 1s infinite",
-    },
-    earningsText: {
-      fontSize: "6vw", // Responsive size based on viewport width
-      color: darkMode ? "#fff" : "#333",
-      animation: "fadeIn 1s ease-in-out",
-      marginBottom: "20px",
-    },
-    percentageText: {
-      fontSize: "3vw", // Responsive size based on viewport width
-      color: percentage && percentage >= 0 ? "#28a745" : "#dc3545",
-      fontWeight: "bold",
-      marginTop: "20px",
-      animation: "fadeIn 1s ease-in-out",
-    },
-    errorText: {
-      color: "red",
-      fontSize: "1.2rem",
-      marginTop: "20px",
-      fontWeight: "bold",
-    },
-    spinner: {
-      animation: "spin 1s infinite linear",
-    },
-    chartWrapper: {
-      width: "100%",
-      maxWidth: "600px", // Max width for the chart
-      marginTop: "30px",
-    },
-    select: {
-      marginTop: "20px",
-      padding: "10px",
-      fontSize: "1rem",
-    },
-    button: {
-      marginTop: "20px",
-      padding: "10px 20px",
-      backgroundColor: darkMode ? "#0074D9" : "#333",
-      color: "#fff",
-      border: "none",
-      cursor: "pointer",
-    },
-  };
+    
+  coinIcon: {
+    color: "#0074D9",
+    marginBottom: "20px",
+    animation: "bounce 1s infinite",
+  },
+  earningsText: {
+    fontSize: "6vw", // Responsive size based on viewport width
+    color: darkMode ? "#fff" : "#333",
+    animation: "fadeIn 1s ease-in-out",
+    marginBottom: "20px",
+  },
+  percentageText: {
+    fontSize: "3vw", // Responsive size based on viewport width
+    color: percentage && percentage >= 0 ? "#28a745" : "#dc3545",
+    fontWeight: "bold",
+    marginTop: "20px",
+    animation: "fadeIn 1s ease-in-out",
+  },
+  errorText: {
+    color: "red",
+    fontSize: "1.2rem",
+    marginTop: "20px",
+    fontWeight: "bold",
+  },
+  spinner: {
+    animation: "spin 1s infinite linear",
+  },
+  chartWrapper: {
+    width: "100%",
+    maxWidth: "600px", // Max width for the chart
+    marginTop: "30px",
+  },
+  select: {
+    marginTop: "20px",
+    padding: "10px",
+    fontSize: "1rem",
+  },
+  button: {
+    marginTop: "20px",
+    padding: "10px 20px",
+    backgroundColor: darkMode ? "#0074D9" : "#333",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+  },
+};
+
 
   return (
     <div style={styles.container}>
