@@ -2,71 +2,107 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FaCoins } from "react-icons/fa"; 
+import { FaCoins, FaSpinner } from "react-icons/fa";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function Home() {
-  const [earnings, setEarnings] = useState<number | null>(null); 
-  const [percentage, setPercentage] = useState<number | null>(null); 
-  const [error, setError] = useState<string | null>(null); 
-  const fixedRippleQuantity = 950.914019; 
-  const initialPricePerXRP = 0.71; //CHF
+  const [earnings, setEarnings] = useState<number | null>(null);
+  const [percentage, setPercentage] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>("CHF");
+  const [historicalPrices, setHistoricalPrices] = useState<any>([]);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    // Ensure that this code only runs on the client-side
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("darkMode");
+      return saved === "true";
+    }
+    return false; // default value
+  });
 
+  const fixedRippleQuantity = 950.914019;
+  const initialPricePerXRP = 0.58;
+
+  // Fetch current price and historical data
   useEffect(() => {
-    const fetchAndUpdateEarnings = async () => {
+    const fetchAndUpdateData = async () => {
       try {
-        // CryptoCompare API call to get XRP price in CHF
+        // Fetch current XRP price in selected currency
         const response = await axios.get("https://min-api.cryptocompare.com/data/price", {
           params: {
-            fsym: "XRP", 
-            tsyms: "CHF", 
+            fsym: "XRP",
+            tsyms: currency,
           },
         });
 
-        // Ensure data exists
-        const price = response?.data?.CHF;
+        const price = response?.data?.[currency];
         if (price === undefined) {
-          console.error("Error: CHF price not available.");
           setError("Unable to fetch data. Please try again later.");
           return;
         }
 
-        // Calculate new earnings in CHF
+        // Calculate earnings and percentage change
         const newEarnings = price * fixedRippleQuantity;
-
-        // Calculate percentage gain/loss in CHF
         const newPercentage = ((price - initialPricePerXRP) / initialPricePerXRP) * 100;
 
-        // Only update state if values have changed
-        setEarnings((prevEarnings) => prevEarnings !== newEarnings ? newEarnings : prevEarnings);
-        setPercentage((prevPercentage) => prevPercentage !== newPercentage ? newPercentage : prevPercentage);
-        setError(null); // Reset error if fetch is successful
+        setEarnings(newEarnings);
+        setPercentage(newPercentage);
+        setError(null);
+
+        // Fetch historical data (last 30 days)
+        const historicalResponse = await axios.get("https://min-api.cryptocompare.com/data/v2/histoday", {
+          params: {
+            fsym: "XRP",
+            tsym: currency,
+            limit: 30,
+          },
+        });
+        setHistoricalPrices(historicalResponse.data.Data.Data);
       } catch (error) {
-        console.error("Error fetching Ripple price:", error);
         setError("Unable to fetch data. Please try again later.");
       }
     };
 
-    // Initial fetch
-    fetchAndUpdateEarnings();
+    fetchAndUpdateData();
 
-    // Refresh earnings every 60 seconds
-    const interval = setInterval(fetchAndUpdateEarnings, 60000);
-
-    // Cleanup the interval on component unmount
+    const interval = setInterval(fetchAndUpdateData, 60000);
     return () => clearInterval(interval);
-  }, []); // No dependencies
+  }, [currency]);
 
-  // Styling constants
+  // Handle currency change
+  const handleCurrencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrency(event.target.value);
+  };
+
+ 
+  // Chart data
+  const chartData = {
+    labels: historicalPrices.map((item: any) => new Date(item.time * 1000).toLocaleDateString()),
+    datasets: [
+      {
+        label: `XRP to ${currency}`,
+        data: historicalPrices.map((item: any) => item.close),
+        borderColor: "#0074D9",
+        backgroundColor: "rgba(0, 116, 217, 0.2)",
+        fill: true,
+      },
+    ],
+  };
+
   const styles = {
     container: {
       fontFamily: "Arial, sans-serif",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      height: "100vh",
-      backgroundColor: "#f4f4f4",
       flexDirection: "column",
       textAlign: "center",
+      backgroundColor: darkMode ? "#333" : "#f4f4f4",
+      padding: "20px",
+      height: "100vh",
     },
     coinIcon: {
       color: "#0074D9",
@@ -74,13 +110,14 @@ export default function Home() {
       animation: "bounce 1s infinite",
     },
     earningsText: {
-      fontSize: "5rem",
-      color: "#333",
+      fontSize: "6vw", // Responsive size based on viewport width
+      color: darkMode ? "#fff" : "#333",
       animation: "fadeIn 1s ease-in-out",
+      marginBottom: "20px",
     },
     percentageText: {
-      fontSize: "2rem",
-      color: "#28a745", // Default green color
+      fontSize: "3vw", // Responsive size based on viewport width
+      color: percentage && percentage >= 0 ? "#28a745" : "#dc3545",
       fontWeight: "bold",
       marginTop: "20px",
       animation: "fadeIn 1s ease-in-out",
@@ -91,32 +128,59 @@ export default function Home() {
       marginTop: "20px",
       fontWeight: "bold",
     },
+    spinner: {
+      animation: "spin 1s infinite linear",
+    },
+    chartWrapper: {
+      width: "100%",
+      maxWidth: "600px", // Max width for the chart
+      marginTop: "30px",
+    },
+    select: {
+      marginTop: "20px",
+      padding: "10px",
+      fontSize: "1rem",
+    },
+    button: {
+      marginTop: "20px",
+      padding: "10px 20px",
+      backgroundColor: darkMode ? "#0074D9" : "#333",
+      color: "#fff",
+      border: "none",
+      cursor: "pointer",
+    },
   };
 
   return (
     <div style={styles.container}>
       {/* Currency Icon */}
       <FaCoins size={80} style={styles.coinIcon} />
-      
+
       {/* Error message */}
       {error && <div style={styles.errorText}>{error}</div>}
 
       {/* Earnings */}
       <h1 style={styles.earningsText}>
-        {earnings !== null ? `CHF ${earnings.toFixed(2)}` : "Loading..."}
+        {earnings === null ? (
+          <FaSpinner size={50} style={styles.spinner} />
+        ) : (
+          `${currency} ${earnings.toFixed(2)}`
+        )}
       </h1>
 
       {/* Percentage Gain */}
-      <div
-        style={{
-          ...styles.percentageText,
-          color: percentage && percentage >= 0 ? "#28a745" : "#dc3545", // Green for positive, red for negative
-        }}
-      >
-        {percentage !== null
-          ? `${percentage.toFixed(2)}% ${percentage >= 0 ? "Gain" : "Loss"}`
-          : "Loading..."}
+      <div style={styles.percentageText}>
+        {percentage === null
+          ? "Loading..."
+          : `${percentage.toFixed(2)}% ${percentage >= 0 ? "Gain" : "Loss"}`}
       </div>
+
+      {/* Chart */}
+      <div style={styles.chartWrapper}>
+        <Line data={chartData} />
+      </div>
+
+      
 
       {/* CSS Animations */}
       <style jsx>{`
@@ -141,6 +205,11 @@ export default function Home() {
             opacity: 1;
             transform: scale(1);
           }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>
