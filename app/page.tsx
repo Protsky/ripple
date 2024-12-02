@@ -2,40 +2,47 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FaCoins } from "react-icons/fa"; // Ripple coin icon from React Icons
+import { FaCoins } from "react-icons/fa"; 
 
 export default function Home() {
-  const [earnings, setEarnings] = useState<number | null>(null); // Changing earnings
-  const [percentage, setPercentage] = useState<number | null>(null); // Percentage gain
-  const fixedRippleQuantity = 950.914019; // Fixed XRP quantity
-  const initialPricePerXRP = 0.65; // Initial price per XRP in USD
+  const [earnings, setEarnings] = useState<number | null>(null); 
+  const [percentage, setPercentage] = useState<number | null>(null); 
+  const [error, setError] = useState<string | null>(null); 
+  const fixedRippleQuantity = 950.914019; 
+  const initialPricePerXRP = 0.71; //CHF
 
   useEffect(() => {
     const fetchAndUpdateEarnings = async () => {
       try {
-        // CryptoCompare API call
+        // CryptoCompare API call to get XRP price in CHF
         const response = await axios.get("https://min-api.cryptocompare.com/data/price", {
           params: {
-            fsym: "XRP", // The symbol for Ripple
-            tsyms: "CHF", // Target currency is CHF
+            fsym: "XRP", 
+            tsyms: "CHF", 
           },
         });
-        const price = response.data.CHF; // Extract the CHF price
+
+        // Ensure data exists
+        const price = response?.data?.CHF;
+        if (price === undefined) {
+          console.error("Error: CHF price not available.");
+          setError("Unable to fetch data. Please try again later.");
+          return;
+        }
+
+        // Calculate new earnings in CHF
         const newEarnings = price * fixedRippleQuantity;
 
-        // Calculate percentage gain
-        const currentPricePerXRP = price * (1 / 0.95); // Assuming 1 CHF ≈ 0.95 USD for conversion
-        const newPercentage = ((currentPricePerXRP - initialPricePerXRP) / initialPricePerXRP) * 100;
+        // Calculate percentage gain/loss in CHF
+        const newPercentage = ((price - initialPricePerXRP) / initialPricePerXRP) * 100;
 
-        // Only update state if earnings or percentage have changed
-        if (earnings !== newEarnings) {
-          setEarnings(newEarnings);
-        }
-        if (percentage !== newPercentage) {
-          setPercentage(newPercentage);
-        }
+        // Only update state if values have changed
+        setEarnings((prevEarnings) => prevEarnings !== newEarnings ? newEarnings : prevEarnings);
+        setPercentage((prevPercentage) => prevPercentage !== newPercentage ? newPercentage : prevPercentage);
+        setError(null); // Reset error if fetch is successful
       } catch (error) {
-        console.error("Error fetching Ripple price:", );
+        console.error("Error fetching Ripple price:", error);
+        setError("Unable to fetch data. Please try again later.");
       }
     };
 
@@ -47,49 +54,63 @@ export default function Home() {
 
     // Cleanup the interval on component unmount
     return () => clearInterval(interval);
-  }, [earnings, percentage]); // Re-run the effect if earnings or percentage change
+  }, []); // No dependencies
+
+  // Styling constants
+  const styles = {
+    container: {
+      fontFamily: "Arial, sans-serif",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",
+      backgroundColor: "#f4f4f4",
+      flexDirection: "column",
+      textAlign: "center",
+    },
+    coinIcon: {
+      color: "#0074D9",
+      marginBottom: "20px",
+      animation: "bounce 1s infinite",
+    },
+    earningsText: {
+      fontSize: "5rem",
+      color: "#333",
+      animation: "fadeIn 1s ease-in-out",
+    },
+    percentageText: {
+      fontSize: "2rem",
+      color: "#28a745", // Default green color
+      fontWeight: "bold",
+      marginTop: "20px",
+      animation: "fadeIn 1s ease-in-out",
+    },
+    errorText: {
+      color: "red",
+      fontSize: "1.2rem",
+      marginTop: "20px",
+      fontWeight: "bold",
+    },
+  };
 
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        backgroundColor: "#f4f4f4",
-        flexDirection: "column",
-        textAlign: "center",
-      }}
-    >
+    <div style={styles.container}>
       {/* Currency Icon */}
-      <FaCoins
-        size={80}
-        style={{
-          color: "#0074D9",
-          marginBottom: "20px",
-          animation: "bounce 1s infinite",
-        }}
-      />
+      <FaCoins size={80} style={styles.coinIcon} />
+      
+      {/* Error message */}
+      {error && <div style={styles.errorText}>{error}</div>}
+
       {/* Earnings */}
-      <h1
-        style={{
-          fontSize: "5rem",
-          color: "#333",
-          animation: "fadeIn 1s ease-in-out",
-        }}
-      >
+      <h1 style={styles.earningsText}>
         {earnings !== null ? `CHF ${earnings.toFixed(2)}` : "Loading..."}
       </h1>
 
       {/* Percentage Gain */}
       <div
         style={{
-          fontSize: "2rem",
+          ...styles.percentageText,
           color: percentage && percentage >= 0 ? "#28a745" : "#dc3545", // Green for positive, red for negative
-          fontWeight: "bold",
-          marginTop: "20px",
-          animation: "fadeIn 1s ease-in-out",
         }}
       >
         {percentage !== null
@@ -110,7 +131,7 @@ export default function Home() {
             transform: translateY(-5px);
           }
         }
-        
+
         @keyframes fadeIn {
           0% {
             opacity: 0;
@@ -125,4 +146,3 @@ export default function Home() {
     </div>
   );
 }
-
