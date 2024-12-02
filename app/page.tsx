@@ -7,7 +7,7 @@ import { FaCoins } from "react-icons/fa"; // Ripple coin icon from React Icons
 export default function Home() {
   const [earnings, setEarnings] = useState<number | null>(null); // Changing earnings
   const [percentage, setPercentage] = useState<number | null>(null); // Percentage gain
-  const fixedRippleQuantity = 650; // Fixed XRP quantity
+  const fixedRippleQuantity = 950.914019; // Fixed XRP quantity
   const initialPricePerXRP = 0.65; // Initial price per XRP in USD
 
   useEffect(() => {
