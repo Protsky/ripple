@@ -23,8 +23,8 @@ export default function Home() {
     return false; // default value
   });
 
-  const fixedRippleQuantity = 950.914019;
-  const initialPricePerXRP = 0.58;
+  const fixedRippleQuantity = 950.914019+500;
+  const initialPricePerXRP = 0.6;
 
   // Fetch current price and historical data
   useEffect(() => {
